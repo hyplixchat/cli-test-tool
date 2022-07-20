@@ -78,7 +78,12 @@ fn main() {
         // arg_itr += 1;
     }
     // println!("{:#?}", options);
-    on_connect_start::connect(options.host, options.username, options.password, options.email, options.login);
+    let mut userdata = ["", ""];
+
+    if on_connect_start::try_saved_token_login(options.host) == ["", ""] {
+        on_connect_start::connect(options.host, options.username, options.password, options.email, options.login);
+    }
+    
     // println!("Host: {}", options.host);
     // println!("Login:");
 }

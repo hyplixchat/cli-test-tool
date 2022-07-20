@@ -1,33 +1,66 @@
-use std::io; // package
-use text_io; // package
-use std::io::Write; // package
+
 use reqwest;
+// use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT, CONTENT_TYPE};
 use std::collections::HashMap;
 use tinyjson::JsonValue;
+use std::fs;
+use std::path::Path;
 // use std::process::exit;
-
-
 
 #[path = "./options.rs"] mod options;
 #[path = "./on_login.rs"] mod on_login;
+#[path = "./utils.rs"] mod utils;
 
 
-fn read_line(question: &str) -> String{
-    print!("{}", question); // print a line without a /n
-    io::stdout().flush().unwrap(); // forcefully push the print!();
-    let line: String = text_io::read!("{}\n"); // read input
-    return line; // return input
+pub fn try_saved_token_login(host: &str) -> [String; 2] {
+    let mut user_data = String::new();
+    println!("Trying to use the saved token.");
+    if !Path::new("./.token").exists() {
+        println!("Token file not found, redirecting to login.");
+        return [String::new(), String::new()];
+    }
+
+    let client = reqwest::blocking::Client::new();
+    let token = fs::read_to_string("./.token").expect("Unable to read file");
+    // println!("token: {}", token);
+    let res = client.get(format!("{}/user/me", host))
+        .bearer_auth(&token)
+        .send();
+
+    println!("{:#?}", res);
+    match res {
+        Ok(r) => {
+            if r.status() != 200 {
+                println!("Token file found, but authentication failed, redirecting to login.");
+                return [String::new(), String::new()];
+            }
+
+            match r.text() {
+                Ok(txt) => {
+                    user_data = txt;
+                },
+                Err(e) => {eprintln!("ERR: {:#?}", e)}
+            }
+        },
+        Err(e) => {eprintln!("ERR: {:#?}", e)}
+    }
+    // println!("{:#?}", res.text());
+    return [token, user_data];// not succesfull
 }
+
+
 
 #[allow(unused_must_use)]
 pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login_tgl: bool){
+    
+
     let mut save_token = false;
 
 
     #[allow(unused_assignments)]
     let mut status = String::new();
     if !login_tgl{
-        status = read_line("Login or register? "); 
+        status = utils::read_line("Login or register? "); 
     } else {
         status = "login".to_owned();
     }
@@ -45,13 +78,13 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
         if login_tgl && (_username != ""){
             username = _username.to_string();
         } else {
-            username = read_line("Username: ");
+            username = utils::read_line("Username: ");
         }
 
         if login_tgl && (_password != ""){
             password = _password.to_string();
         } else {
-            password = read_line("Password: ");
+            password = utils::read_line("Password: ");
         }
         
         
@@ -75,7 +108,7 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
                         };
                         // println!("{}", token);
                         println!("Succesfully logged in as MCorange!");
-                        let save_tokenq: String = read_line("Save token for other sessions? (y/n): "); 
+                        let save_tokenq: String = utils::read_line("Save token for other sessions? (y/n): "); 
                         if save_tokenq.to_lowercase().as_str() == "y" {
                             save_token = true;
                         }
@@ -91,10 +124,10 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
         let client = reqwest::blocking::Client::new();
 
         println!("Connecting to: '{}'", host);
-        let username: String = read_line("Username: ");
-        let password: String = read_line("Password: ");
-        let password2: String = read_line("Password confirmation: ");
-        let email: String = read_line("Email: ");
+        let username: String = utils::read_line("Username: ");
+        let password: String = utils::read_line("Password: ");
+        let password2: String = utils::read_line("Password confirmation: ");
+        let email: String = utils::read_line("Email: ");
 
 
         if password != password2 {
@@ -124,7 +157,7 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
                         };
                         // println!("{}", token);
                         println!("Succesfully logged in as MCorange!");
-                        let save_tokenq: String = read_line("Save token for other sessions? (y/n): "); 
+                        let save_tokenq: String = utils::read_line("Save token for other sessions? (y/n): "); 
                         if save_tokenq.to_lowercase().as_str() == "y" {
                             save_token = true;
                         }
