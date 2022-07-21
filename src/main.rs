@@ -3,6 +3,7 @@ use std::process::exit;
 
 mod on_connect_start;
 mod options;
+mod on_login;
 
 /**
  * Default settings
@@ -16,9 +17,10 @@ fn handle_unknown_env_arg(env_arg: &str){
 
 fn handle_help(exec: &str){
     println!("Usage: \n    {} [FLAGS]",exec);
-    println!("FLAGS: \n{}\n{}",
+    println!("FLAGS: \n{}\n{}\n{}",
                 "          -h, --hello    Shows this help page,",
-                "--host [ip or domain]    Changes the default server for the chat");
+                "--host [ip or domain]    Changes the default server for the chat",
+                "             --login     Do not ask if u want to login or register, \nautomaticaly select login");
     exit(0);
 }
 
@@ -32,12 +34,10 @@ fn main() {
     let mut host_tgl = false;
     let mut username_tgl = false;
     let mut password_tgl = false;
-    let mut email_tgl = false;
     let mut options = options::Options{
         host: HOST,
         username: "",
         password: "",
-        email: "",
         login: false
     };
     for argument in args {
@@ -59,12 +59,6 @@ fn main() {
             continue;
         }
 
-        if email_tgl {
-            email_tgl = false;
-            options.email = argument;
-            continue;
-        }
-
         match argument {
             "-h" => {handle_help(exec)},
             "--help" => {handle_help(exec)},
@@ -72,16 +66,17 @@ fn main() {
             "--login" => {options.login = true},
             "--username" => {username_tgl = true},
             "--password" => {password_tgl = true},
-            "--email" => {email_tgl = true},
             _ => {handle_unknown_env_arg(argument);}
         }
         // arg_itr += 1;
     }
     // println!("{:#?}", options);
-    let mut userdata = ["", ""];
+    let mut token: String = on_connect_start::try_saved_token_login(options.host);
 
-    if on_connect_start::try_saved_token_login(options.host) == ["", ""] {
-        on_connect_start::connect(options.host, options.username, options.password, options.email, options.login);
+    if token == String::new() {
+        token = on_connect_start::connect(options.host, options.username, options.password, options.login);
+    } else {
+        on_login::continue_login(token.as_str())
     }
     
     // println!("Host: {}", options.host);

@@ -12,27 +12,27 @@ use std::path::Path;
 #[path = "./utils.rs"] mod utils;
 
 
-pub fn try_saved_token_login(host: &str) -> [String; 2] {
+pub fn try_saved_token_login(host: &str) -> String {
     let mut user_data = String::new();
     println!("Trying to use the saved token.");
     if !Path::new("./.token").exists() {
         println!("Token file not found, redirecting to login.");
-        return [String::new(), String::new()];
+        return String::new()
     }
 
     let client = reqwest::blocking::Client::new();
     let token = fs::read_to_string("./.token").expect("Unable to read file");
-    // println!("token: {}", token);
+    println!("token: {}", token);
     let res = client.get(format!("{}/user/me", host))
         .bearer_auth(&token)
         .send();
 
-    println!("{:#?}", res);
+    // println!("{:#?}", res);
     match res {
         Ok(r) => {
             if r.status() != 200 {
                 println!("Token file found, but authentication failed, redirecting to login.");
-                return [String::new(), String::new()];
+                return String::new()
             }
 
             match r.text() {
@@ -45,16 +45,14 @@ pub fn try_saved_token_login(host: &str) -> [String; 2] {
         Err(e) => {eprintln!("ERR: {:#?}", e)}
     }
     // println!("{:#?}", res.text());
-    return [token, user_data];// not succesfull
+    return token;// not succesfull
 }
 
 
 
 #[allow(unused_must_use)]
-pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login_tgl: bool){
+pub fn connect(host: &str, _username: &str, _password: &str, login_tgl: bool) -> String{
     
-
-    let mut save_token = false;
 
 
     #[allow(unused_assignments)]
@@ -108,16 +106,19 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
                         };
                         // println!("{}", token);
                         println!("Succesfully logged in as MCorange!");
-                        let save_tokenq: String = utils::read_line("Save token for other sessions? (y/n): "); 
-                        if save_tokenq.to_lowercase().as_str() == "y" {
-                            save_token = true;
-                        }
-                        on_login::continue_login(token, save_token);
+                        return token.to_string();
                     },
-                    Err(e) => {eprintln!("ERR: {:#?}", e)}
+                    Err(e) => {
+                        eprintln!("ERR: {:#?}", e);
+                        return String::new();    
+
+                    }
                 }      
             },
-            Err(e) => {eprintln!("ERR: {:#?}", e)}
+            Err(e) => {
+                eprintln!("ERR: {:#?}", e);
+                return String::new();    
+            }
         }
     
     } else if status == "register".to_owned() {
@@ -132,7 +133,7 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
 
         if password != password2 {
             println!("Passwords do not match!");
-            return;
+            return "".to_string();
         }
 
         // println!("{{\"password\":\"{}\",\"username\":\"{}\"}}", password, username);
@@ -157,19 +158,22 @@ pub fn connect(host: &str, _username: &str, _password: &str, _email: &str, login
                         };
                         // println!("{}", token);
                         println!("Succesfully logged in as MCorange!");
-                        let save_tokenq: String = utils::read_line("Save token for other sessions? (y/n): "); 
-                        if save_tokenq.to_lowercase().as_str() == "y" {
-                            save_token = true;
-                        }
-                        on_login::continue_login(token, save_token);
+                        return token.to_string();
                     },
-                    Err(e) => {eprintln!("ERR: {:#?}", e)}
+                    Err(e) => {
+                        eprintln!("ERR: {:#?}", e);
+                        return String::new();    
+                    }
                 }      
             },
-            Err(e) => {eprintln!("ERR: {:#?}", e)}
+            Err(e) => {
+                eprintln!("ERR: {:#?}", e);
+                return String::new();  
+            }
         }
     } else {
         println!("Unknow option {:?}", status);
+        return String::new();
     }
 
 }
