@@ -71,13 +71,15 @@ fn main() {
         // arg_itr += 1;
     }
     // println!("{:#?}", options);
+    
     let mut token: String = on_connect_start::try_saved_token_login(options.host);
 
     if token == String::new() {
         token = on_connect_start::connect(options.host, options.username, options.password, options.login);
-    } else {
-        on_login::continue_login(token.as_str())
     }
+       on_login::continue_login(HOST, token.as_str());
+
+
     
     // println!("Host: {}", options.host);
     // println!("Login:");

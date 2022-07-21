@@ -13,7 +13,7 @@ use std::path::Path;
 
 
 pub fn try_saved_token_login(host: &str) -> String {
-    let mut user_data = String::new();
+    // let mut user_data = String::new();
     println!("Trying to use the saved token.");
     if !Path::new("./.token").exists() {
         println!("Token file not found, redirecting to login.");
@@ -22,7 +22,7 @@ pub fn try_saved_token_login(host: &str) -> String {
 
     let client = reqwest::blocking::Client::new();
     let token = fs::read_to_string("./.token").expect("Unable to read file");
-    println!("token: {}", token);
+    // println!("token: {}", token);
     let res = client.get(format!("{}/user/me", host))
         .bearer_auth(&token)
         .send();
@@ -36,13 +36,19 @@ pub fn try_saved_token_login(host: &str) -> String {
             }
 
             match r.text() {
-                Ok(txt) => {
-                    user_data = txt;
+                Ok(_txt) => {
+                   
                 },
-                Err(e) => {eprintln!("ERR: {:#?}", e)}
+                Err(e) => {
+                    eprintln!("ERR: {:#?}", e);
+                    return String::new();
+                }
             }
         },
-        Err(e) => {eprintln!("ERR: {:#?}", e)}
+        Err(e) => {
+            eprintln!("ERR: {:#?}", e);
+            return String::new()
+        }
     }
     // println!("{:#?}", res.text());
     return token;// not succesfull
